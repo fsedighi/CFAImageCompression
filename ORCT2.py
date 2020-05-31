@@ -6,7 +6,7 @@ A = np.array([1 / 2, 1 / 2], [-1, 1])
 def compute_orct2(bayer):
     bayer_number_of_rows = bayer.shape[0]
     bayer_number_of_columns = bayer.shape[1]
-    final_block = np.zeros((bayer_number_of_rows, bayer_number_of_columns))
+    final_block = bayer
     row_index = 0
     column_index = 0
     while column_index < bayer_number_of_columns:
