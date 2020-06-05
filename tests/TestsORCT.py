@@ -11,6 +11,10 @@ from Utils.CompressionEvaluation import CompressionEvaluation
 
 class TestORCT(unittest.TestCase):
 
+    def __init__(self, methodName: str = ...) -> None:
+        super().__init__(methodName)
+        self.compressionEvaluation = CompressionEvaluation()
+
     def test_orct1(self):
         bayer = cv2.imread("../Data/image.bmp")
         bayer = np.sum(bayer, axis=2).astype('float64')
@@ -33,7 +37,16 @@ class TestORCT(unittest.TestCase):
         bayer = cv2.imread("../Data/image.bmp")
         bayer = np.sum(bayer, axis=2).astype('float64')
         filtered = compute_orct3(compute_orct2(compute_orct1(bayer)))
-        compressionEvaluation = CompressionEvaluation()
-        compressionEvaluation.evaluate(bayer, "before ocrt")
-        compressionEvaluation.evaluate(filtered, "after ocrt")
+
+        self.compressionEvaluation.evaluate(bayer, "before ocrt")
+        self.compressionEvaluation.evaluate(filtered, "after ocrt")
+        pass
+
+    def test_orct12(self):
+        bayer = cv2.imread("../Data/image.bmp")
+        bayer = np.sum(bayer, axis=2).astype('float64')
+        filtered = compute_orct2(compute_orct1(bayer))
+
+        self.compressionEvaluation.evaluate(bayer, "before ocrt")
+        self.compressionEvaluation.evaluate(filtered, "after ocrt")
         pass
