@@ -23,9 +23,12 @@ class CompressionEvaluation:
         imPillow = Image.fromarray(data_image)
         imPillow.save(self.jpegLossy, "JPEG", quality=95)
         # Sizes.
-        print('Size of uncompressed {0}: {1} KB'.format(imageName, len(data_image.tostring()) / 1024))
-        print('Size of JPEG-2000 encoded {0}: {1} KB'.format(imageName, os.stat(self.jpeg200Name).st_size / 1024))
-        print('Size of JPEG-lossy encoded {0}: {1} KB'.format(imageName, os.stat(self.jpegLossy).st_size / 1024))
+        originalSize = len(data_image.tostring()) / 1024
+        jpeg2000Size = os.stat(self.jpeg200Name).st_size / 1024
+        jpegLossySize = os.stat(self.jpegLossy).st_size / 1024
+        print('Size of uncompressed {0}: {1} KB'.format(imageName, originalSize))
+        print('compression ratio of JPEG-2000 encoded {0}: {1} KB'.format(imageName, originalSize / jpeg2000Size))
+        print('compression ratio of JPEG-lossy encoded {0}: {1} KB'.format(imageName, originalSize / jpegLossySize))
         # Decompress.
         jp2Decoded = glymur.Jp2k(self.jpeg200Name).read()
 
