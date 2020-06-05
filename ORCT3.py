@@ -18,6 +18,5 @@ def compute_orct3(bayer):
             wy = y2 + np.floor(y1 / 2)
             final_block[row_index][column_index] = dy
             final_block[row_index][column_index + 2] = wy
-            column_index += 2
 
     return final_block
