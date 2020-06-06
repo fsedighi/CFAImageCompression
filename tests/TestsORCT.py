@@ -56,7 +56,7 @@ class TestORCT(unittest.TestCase):
     def test_ocrtWithDataset(self):
         rgbImages = self.datasetUtils.loadFoodDataset()
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
-        bayer = cfaImages[0, :, :, 0].astype("float32")
+        bayer = cfaImages[0, :, :].astype("float32")
         filtered = compute_orct2(compute_orct1(bayer))
 
         self.compressionEvaluation.evaluate(bayer, "before ocrt")

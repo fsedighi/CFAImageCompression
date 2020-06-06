@@ -32,12 +32,12 @@ class DatasetUtils:
         rgb2CFAUtils = RGB2CFAUtils()
         n_data, h, w, c = rgbImages.shape
 
-        cfaImages = np.zeros([n_data, h, w, 1])
+        cfaImages = []
         for i in range(n_data):
-            cfaImages[i, :, :, 0] = rgb2CFAUtils.rgb2CFA(rgbImages[i, :, :, :])[0]
+            cfaImages.append(rgb2CFAUtils.rgb2CFA(rgbImages[i], show=False))
             print("converting image {0} to CFA: Training".format(i))
-
+        cfaImages = np.asarray(cfaImages)
         image_size = cfaImages.shape[1]
-        cfaImages = np.reshape(cfaImages, [-1, image_size, image_size, 1])
+        cfaImages = np.reshape(cfaImages, [-1, image_size, image_size])
         cfaImages = cfaImages.astype('uint8')
         return cfaImages, image_size

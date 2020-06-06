@@ -10,14 +10,14 @@ def compute_orct2(bayer):
     bayer_number_of_columns = bayer.shape[1]
     final_block = copy.deepcopy(bayer)
 
-    for column_index in range(1, bayer_number_of_columns, 2):
+    for column_index in range(0, bayer_number_of_columns, 2):
         for row_index in range(0, bayer_number_of_rows, 2):
-            wr = bayer[row_index][column_index]
-            wb = bayer[row_index + 1][column_index]
+            wr = bayer[row_index+ 1][column_index]
+            wb = bayer[row_index][column_index]
 
-            converted = A @ np.asarray([wr, wb])
+            converted_y_dw = A @ np.asarray([wb, wr]).transpose()
 
-            final_block[row_index][column_index] = converted[0]
-            final_block[row_index + 1][column_index] = converted[1]
+            final_block[row_index][column_index] = converted_y_dw[0]
+            final_block[row_index + 1][column_index] = converted_y_dw[1]+128
 
     return final_block
