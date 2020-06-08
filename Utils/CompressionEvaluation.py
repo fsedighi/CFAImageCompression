@@ -13,11 +13,8 @@ class CompressionEvaluation:
         self.jpegLossy = "myfile.jpeg"
 
     def evaluate(self, data_image, imageName):
-        # Compress image data to a sequence of bytes.
-        # data_image = data_image + np.abs(np.min(data_image))
-        # data_image = data_image / np.max(data_image)  # normalize the data to 0 - 1
-        # data_image = 255 * data_image  # Now scale by 255
-        data_image = np.abs(data_image).astype('uint8')
+
+        data_image = data_image.astype('uint8')
 
         jp2 = glymur.Jp2k(self.jpeg200Name, data=data_image, cratios=[1])
         imPillow = Image.fromarray(data_image)

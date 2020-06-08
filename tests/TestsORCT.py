@@ -59,7 +59,7 @@ class TestORCT(unittest.TestCase):
 
         filtered = (filtered + 255) / 2
 
-        self.compressionEvaluation.evaluate(twoComplement, "before ocrt")
+        self.compressionEvaluation.evaluate(bayer, "before ocrt")
         self.compressionEvaluation.evaluate(filtered, "after ocrt")
         pass
 
