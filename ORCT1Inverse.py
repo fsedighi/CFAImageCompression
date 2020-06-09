@@ -16,7 +16,7 @@ def compute_orct1inverse(bayer):
             wb = bayer[row_index + 1][column_index]
             db = bayer[row_index + 1][column_index + 1]
             converted_gr_r = np.linalg.pinv(A) @ np.asarray([wr, dr]).transpose()
-            converted_gb_b = A @ np.asarray([wb, db]).transpose()
+            converted_gb_b = np.linalg.pinv(A) @ np.asarray([wb, db]).transpose()
 
             final_block[row_index][column_index + 1] = converted_gr_r[1]
             final_block[row_index+ 1][column_index] = converted_gr_r[0]
