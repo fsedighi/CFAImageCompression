@@ -5,6 +5,7 @@ from ORCT1 import compute_orct1
 import cv2
 
 from ORCT2 import compute_orct2
+from ORCT2Plus3 import compute_orct2plus3
 from ORCT3 import compute_orct3
 from Utils.CompressionEvaluation import CompressionEvaluation
 from Utils.DataUtils import DataUtils
@@ -49,6 +50,20 @@ class TestORCT(unittest.TestCase):
         self.compressionEvaluation.evaluate(filtered, "after ocrt")
         pass
 
+    def test_orct123Plus(self):
+        bayer = self.datasetUtils.readCFAImages()
+
+        twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
+        twoComplement = twoComplement.astype("float32")
+
+        filtered = compute_orct2plus3(compute_orct1(twoComplement))
+
+        filtered = (filtered + 255) / 2
+
+        self.compressionEvaluation.evaluate(bayer, "before ocrt")
+        self.compressionEvaluation.evaluate(filtered, "after ocrt")
+        pass
+
     def test_orct12(self):
         bayer=self.datasetUtils.readCFAImages()
 
@@ -66,12 +81,12 @@ class TestORCT(unittest.TestCase):
     def test_ocrtWithDataset(self):
         rgbImages = self.datasetUtils.loadKodakDataset()
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
-        bayer = cfaImages[0, :, :]
+        bayer = cfaImages[2, :, :]
 
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
         twoComplement = twoComplement.astype("float32")
 
-        filtered = compute_orct2(compute_orct1(twoComplement))
+        filtered = compute_orct2plus3(compute_orct2(compute_orct1(twoComplement)))
 
         filtered = (filtered + 255) / 2
 
