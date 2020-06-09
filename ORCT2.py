@@ -12,8 +12,8 @@ def compute_orct2(bayer):
 
     for column_index in range(0, bayer_number_of_columns, 2):
         for row_index in range(0, bayer_number_of_rows, 2):
-            wr = bayer[row_index+ 1][column_index]
-            wb = bayer[row_index][column_index]
+            wr = bayer[row_index][column_index]
+            wb = bayer[row_index + 1][column_index]
 
             converted_y_dw = A @ np.asarray([wb, wr]).transpose()
 

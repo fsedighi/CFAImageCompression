@@ -19,9 +19,9 @@ def compute_orct1(bayer):
             converted_wb_db = A @ np.asarray([gb, b]).transpose()
 
             final_block[row_index][column_index + 1] = converted_wr_dr[1]
-            final_block[row_index+ 1][column_index] = converted_wr_dr[0]
+            final_block[row_index][column_index] = converted_wr_dr[0]
 
             final_block[row_index + 1][column_index + 1] = converted_wb_db[1]
-            final_block[row_index][column_index] = converted_wb_db[0]
+            final_block[row_index + 1][column_index] = converted_wb_db[0]
 
     return final_block
