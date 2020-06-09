@@ -39,7 +39,7 @@ class Evaluation:
         jp2Decoded = glymur.Jp2k(self.jpeg200Name).read()
         if inverseFilterFunction is not None:
             retrivedData = inverseFilterFunction(jp2Decoded)
-            retrivedData=retrivedData.astype('uint8')
+            retrivedData = np.abs(retrivedData).astype('uint8')
             pass
 
         # Compare image data, before and after.
