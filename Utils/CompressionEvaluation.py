@@ -18,7 +18,7 @@ class CompressionEvaluation:
 
         jp2 = glymur.Jp2k(self.jpeg200Name, data=data_image, cratios=[1])
         imPillow = Image.fromarray(data_image)
-        imPillow.save(self.jpegLossy, "JPEG", quality=95)
+        imPillow.save(self.jpegLossy, "JPEG", quality=90)
         # Sizes.
         originalSize = len(data_image.tostring()) / 1024
         jpeg2000Size = os.stat(self.jpeg200Name).st_size / 1024
