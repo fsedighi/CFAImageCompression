@@ -1,5 +1,4 @@
 import copy
-import copy
 import numpy as np
 
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
