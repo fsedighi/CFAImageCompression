@@ -76,13 +76,13 @@ class TestORCT(unittest.TestCase):
         filtered = (filtered + 255) / 2
 
         def inverseFunction(data):
-            data = data * 2 - 255
+            data = data.astype('float32') * 2 - 255
             data = compute_orct2inverse(data)
             data = compute_orct1inverse(data)
             return data
 
         sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
+        self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
         pass
 
     def test_ocrtWithDataset(self):

@@ -30,7 +30,7 @@ class Evaluation:
 
     def evaluate(self, filteredData, originalData, inverseFilterFunction=None):
         filteredData = filteredData.astype('uint8')
-        originalData = originalData.astype('uint8')
+        originalData = np.abs(originalData).astype('uint8')
 
         jpeg2000CompressionRatioBefore, JpegLossyCompressionRatioBefore = self.compressionRatio(originalData, "Before")
         jpeg2000CompressionRatioAfter, JpegLossyCompressionRatioAfter = self.compressionRatio(filteredData, "After")
@@ -39,6 +39,7 @@ class Evaluation:
         jp2Decoded = glymur.Jp2k(self.jpeg200Name).read()
         if inverseFilterFunction is not None:
             retrivedData = inverseFilterFunction(jp2Decoded)
+            retrivedData=retrivedData.astype('uint8')
             pass
 
         # Compare image data, before and after.
