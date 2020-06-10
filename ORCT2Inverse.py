@@ -2,11 +2,12 @@ import copy
 import copy
 import numpy as np
 
+global A
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
-
 
 def compute_orct2inverse(bayer, Alocal=None):
     if Alocal is not None:
+        global A
         A = Alocal
     bayer_number_of_rows = bayer.shape[0]
     bayer_number_of_columns = bayer.shape[1]

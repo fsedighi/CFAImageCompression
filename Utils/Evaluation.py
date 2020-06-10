@@ -125,4 +125,4 @@ class Evaluation:
         if verbose:
             print('\nRestored data is identical to original? {:s}\n'.format(str(is_same)))
 
-        return psnr, ssim, jpeg2000CompressionRatioAfter
+        return psnr, ssim, jpeg2000CompressionRatioAfter,jpeg2000CompressionRatioBefore

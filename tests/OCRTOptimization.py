@@ -42,7 +42,7 @@ class TestORCT(unittest.TestCase):
                 return data
 
             sampleFunctionReverse = inverseFunction
-            psnr, ssim, jpeg2000CompressionRatioAfter = self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
+            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
             cost = np.abs((1 / psnr) * (1 / ssim) * 1 / (jpeg2000CompressionRatioAfter))
             costs.append(cost)
         return np.array(costs)
@@ -64,8 +64,8 @@ class TestORCT(unittest.TestCase):
     def test_orct12_(self):
         # pos = np.asarray([0.39182592, 0.23747258, 0.51497874, -0.08751142])
         # x = np.reshape(pos, [2, 2])
-        x = np.asarray([[-0.91809187, 0.77706324],
-                          [-1.13317474, - 0.09527626]])
+        x = np.asarray([[0.05011018, -0.53709484],
+                        [-1.1104253, -0.30699651]])
         bayer = self.datasetUtils.readCFAImages()
 
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
@@ -142,14 +142,18 @@ class MyProblem(Problem):
 
             sampleFunctionReverse = inverseFunction
             try:
-                psnr, ssim, jpeg2000CompressionRatioAfter = self.evaluation.evaluate(filtered, self.twoComplement, sampleFunctionReverse, verbose=False)
+                psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, self.twoComplement, sampleFunctionReverse, verbose=False)
             except:
                 psnr = 1
                 ssim = .1
                 jpeg2000CompressionRatioAfter = 1
+                jpeg2000CompressionRatioBefore = 1.001
             psnrs.append(1 / psnr)
             ssims.append(1 / ssim)
-            jpeg200compressions.append(1 / jpeg2000CompressionRatioAfter)
+            CR = jpeg2000CompressionRatioAfter - jpeg2000CompressionRatioBefore
+            if CR < 0:
+                CR = 0.001
+            jpeg200compressions.append(1 / CR)
 
         out["F"] = np.column_stack([psnrs, ssims, jpeg200compressions])
         out["G"] = np.column_stack([-1 * np.asarray(psnrs), -1 * np.asarray(ssims)])
