@@ -87,3 +87,9 @@ class TestORCT(unittest.TestCase):
 
         self.evaluation.evaluate(filtered, bayer)
         pass
+
+    def test_simpleORCT(self):
+        bayer = np.array([[146, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57]])
+        data = compute_orct2plus3(bayer)
+        data2 = compute_orct2plus3inverse(data)
+        pass
