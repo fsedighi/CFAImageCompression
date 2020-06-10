@@ -15,10 +15,15 @@ def compute_orct2plus3inverse(bayer, Alocal=None):
     inverseA = np.linalg.pinv(A)
     for column_index in range(0, bayer_number_of_columns, 2):
         for row_index in range(bayer_number_of_rows - 1, 0, -1):
+            index = bayer_number_of_rows % 2
             w1 = final_block[row_index][column_index]
             w2 = final_block[row_index - 1][column_index]
             converted_w1_w2 = inverseA @ np.array([w1, w2]).transpose()
-            final_block[row_index][column_index] = converted_w1_w2[0]
-            final_block[row_index - 1][column_index] = converted_w1_w2[1]
+            if index == 0:
+                final_block[row_index][column_index] = np.ceil(converted_w1_w2[0])
+                final_block[row_index - 1][column_index] = np.ceil(converted_w1_w2[1])
+            elif index == 1:
+                final_block[row_index][column_index] = np.floor(converted_w1_w2[0])
+                final_block[row_index - 1][column_index] = np.floor(converted_w1_w2[1])
 
     return final_block

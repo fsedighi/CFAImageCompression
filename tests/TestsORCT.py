@@ -49,7 +49,7 @@ class TestORCT(unittest.TestCase):
             return data
 
         sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, twoComplement,sampleFunctionReverse)
+        self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
 
         pass
 
@@ -81,7 +81,7 @@ class TestORCT(unittest.TestCase):
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
         twoComplement = twoComplement.astype("float32")
 
-        filtered = compute_orct2plus3(compute_orct2(compute_orct1(twoComplement)))
+        filtered = compute_orct2(compute_orct1(twoComplement))
 
         filtered = (filtered + 255) / 2
 
@@ -89,7 +89,9 @@ class TestORCT(unittest.TestCase):
         pass
 
     def test_simpleORCT(self):
-        bayer = np.array([[146, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57]])
+        bayer = np.array([[145, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57],
+                          [145, 75, 142, 73], [46, 61, 72, 62], [117, 47, 105, 65], [87, 31, 53, 17]])
+        bayer = bayer.astype("float32")
         data = compute_orct2plus3(bayer)
         data2 = compute_orct2plus3inverse(data)
         pass
