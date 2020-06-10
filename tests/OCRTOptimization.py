@@ -16,11 +16,12 @@ from ORCT1Inverse import compute_orct1inverse
 from ORCT2 import compute_orct2
 from ORCT2Inverse import compute_orct2inverse
 from ORCT2Plus3 import compute_orct2plus3
+from ORCT2Plus3Inverse import compute_orct2plus3inverse
 from Utils.Evaluation import Evaluation
 from Utils.DataUtils import DataUtils
 
 
-class TestORCT(unittest.TestCase):
+class TestORCTOptimization(unittest.TestCase):
 
     def __init__(self, methodName: str = ...) -> None:
         super().__init__(methodName)
@@ -62,10 +63,10 @@ class TestORCT(unittest.TestCase):
         pass
 
     def test_orct12_(self):
-        # pos = np.asarray([0.39182592, 0.23747258, 0.51497874, -0.08751142])
-        # x = np.reshape(pos, [2, 2])
-        x = np.asarray([[0.05011018, -0.53709484],
-                        [-1.1104253, -0.30699651]])
+        pos = np.asarray([0.39182592, 0.23747258, 0.51497874, -0.08751142])
+        x = np.reshape(pos, [2, 2])
+        # x = np.asarray([[0.05011018, -0.53709484],
+        #                 [-1.1104253, -0.30699651]])
         bayer = self.datasetUtils.readCFAImages()
 
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
@@ -83,6 +84,30 @@ class TestORCT(unittest.TestCase):
 
         sampleFunctionReverse = inverseFunction
         self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
+        pass
+
+    def test_ocrtOptimizedWithDataset(self):
+        pos = np.asarray([0.39182592, 0.23747258, 0.51497874, -0.08751142])
+        x = np.reshape(pos, [2, 2])
+        rgbImages = self.datasetUtils.loadKodakDataset()
+        cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
+        bayer = cfaImages[2, :, :]
+
+        twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
+        twoComplement = twoComplement.astype("float32")
+
+        filtered = compute_orct2plus3(compute_orct1(twoComplement, x), x)
+
+        filtered = (filtered + 255) / 2
+
+        def inverseFunction(data):
+            data = data.astype('float32') * 2 - 255
+            data = compute_orct2plus3inverse(data, x)
+            data = compute_orct1inverse(data, x)
+            return data
+
+        sampleFunctionReverse = inverseFunction
+        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
         pass
 
     def test_multiObjOptimization(self):
