@@ -3,7 +3,9 @@ import numpy as np
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
 
 
-def compute_orct1(bayer):
+def compute_orct1(bayer, Alocal=None):
+    if Alocal is not None:
+        A = Alocal
     bayer_number_of_rows = bayer.shape[0]
     bayer_number_of_columns = bayer.shape[1]
     final_block = np.zeros((bayer_number_of_rows, bayer_number_of_columns))

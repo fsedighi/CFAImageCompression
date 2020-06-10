@@ -1,8 +1,10 @@
 import math
 import os
+import sys
 
 import cv2
 import glymur as glymur
+import lz4.frame
 import numpy as np
 from PIL import Image
 
@@ -13,6 +15,7 @@ class Evaluation:
         super().__init__()
         self.jpeg200Name = "myfile.jp2"
         self.jpegLossy = "myfile.jpeg"
+        self.lzw = "lzw.lz"
 
     def calculate_psnr(self, img1, img2):
         # img1 and img2 have range [0, 255]
@@ -22,6 +25,17 @@ class Evaluation:
         if mse == 0:
             return float('inf')
         return 20 * math.log10(255.0 / math.sqrt(mse))
+
+    def applyLZWCompressionOnImage(self, image):
+        compressedImage = lz4.frame.compress(image)
+        originalSize = sys.getsizeof(image)
+        compressedSize = sys.getsizeof(compressedImage)
+        compressionRatio = originalSize / compressedSize
+        return compressedImage, compressionRatio, compressedSize
+
+    def decompress(self, shapes):
+        image_bytes = lz4.frame.decompress(self.lzw)
+        return np.reshape(np.frombuffer(image_bytes, np.uint8), shapes)
 
     def ssim(self, img1, img2):
         C1 = (0.01 * 255) ** 2
@@ -65,38 +79,50 @@ class Evaluation:
         else:
             raise ValueError('Wrong input image dimensions.')
 
-    def compressionRatio(self, data, imageName):
+    def compressionRatio(self, data, imageName, verbose):
+        # compressions
         jp2 = glymur.Jp2k(self.jpeg200Name, data=data, cratios=[1])
         imPillow = Image.fromarray(data)
         imPillow.save(self.jpegLossy, "JPEG", quality=90)
+        compressedImage, compressionRatioLZW, compressedSize = self.applyLZWCompressionOnImage(data)
         # Sizes.
         originalSize = len(data.tostring()) / 1024
         jpeg2000Size = os.stat(self.jpeg200Name).st_size / 1024
         jpegLossySize = os.stat(self.jpegLossy).st_size / 1024
-        print('Size of uncompressed {0}: {1} KB'.format(imageName, originalSize))
         jpeg2000CompressionRatio = originalSize / jpeg2000Size
-        print('compression ratio of JPEG-2000 encoded {0}: {1}'.format(imageName, jpeg2000CompressionRatio))
         JpegLossyCompressionRatio = originalSize / jpegLossySize
-        print('compression ratio of JPEG-lossy encoded {0}: {1}'.format(imageName, JpegLossyCompressionRatio))
+        if verbose:
+            print('Size of uncompressed {0}: {1} KB'.format(imageName, originalSize))
+            print('compression ratio of JPEG-2000 encoded {0}: {1}'.format(imageName, jpeg2000CompressionRatio))
+            print('compression ratio of JPEG-lossy encoded {0}: {1}'.format(imageName, JpegLossyCompressionRatio))
+            print('compression ratio of LZW encoded {0}: {1}'.format(imageName, compressionRatioLZW))
 
-        return jpeg2000CompressionRatio, JpegLossyCompressionRatio
+        return jpeg2000CompressionRatio, JpegLossyCompressionRatio, compressionRatioLZW
 
-    def evaluate(self, filteredData, originalData, inverseFilterFunction=None):
+    def evaluate(self, filteredData, originalData, inverseFilterFunction=None, verbose=True):
         filteredData = filteredData.astype('uint8')
         originalData = np.abs(originalData).astype('uint8')
 
-        jpeg2000CompressionRatioBefore, JpegLossyCompressionRatioBefore = self.compressionRatio(originalData, "Before")
-        jpeg2000CompressionRatioAfter, JpegLossyCompressionRatioAfter = self.compressionRatio(filteredData, "After")
+        jpeg2000CompressionRatioBefore, JpegLossyCompressionRatioBefore, compressionRatioLZWBefore = self.compressionRatio(originalData, "Before", verbose)
+        if verbose:
+            print("**************************************************")
+        jpeg2000CompressionRatioAfter, JpegLossyCompressionRatioAfter, compressionRatioLZWAfter = self.compressionRatio(filteredData, "After", verbose)
 
         # Decompress.
+        psnr = None
+        ssim = None
         jp2Decoded = glymur.Jp2k(self.jpeg200Name).read()
         if inverseFilterFunction is not None:
             retrivedData = inverseFilterFunction(jp2Decoded)
             retrivedData = np.abs(retrivedData).astype('uint8')
             ssim = self.calculate_ssim(retrivedData, originalData)
             psnr = self.calculate_psnr(retrivedData, originalData)
-            print("JPEG 2000 : PSNR= {0};  SSIM={1}".format(psnr, ssim))
+            if verbose:
+                print("JPEG 2000 : PSNR= {0};  SSIM={1}".format(psnr, ssim))
 
         # Compare image data, before and after.
         is_same = (filteredData == jp2Decoded).all()
-        print('\nRestored data is identical to original? {:s}\n'.format(str(is_same)))
+        if verbose:
+            print('\nRestored data is identical to original? {:s}\n'.format(str(is_same)))
+
+        return psnr, ssim, jpeg2000CompressionRatioAfter
