@@ -18,6 +18,12 @@ def compute_orct2inverse(bayer, Alocal=None):
         for row_index in range(0, bayer_number_of_rows, 2):
             y = bayer[row_index][column_index]
             dw = bayer[row_index+1][column_index]
+            index = dw % 2
+
+            if index == 1:
+                y += 0.5
+            else:
+                pass
 
             converted_wb_wr = inverseA @ np.asarray([y, dw]).transpose()
 
