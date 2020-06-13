@@ -9,7 +9,7 @@ from ORCT2 import compute_orct2
 from ORCT2Inverse import compute_orct2inverse
 from ORCT2Plus3 import compute_orct2plus3
 from ORCT2Plus3Inverse import compute_orct2plus3inverse
-
+import pandas as pd
 from Utils.Evaluation import Evaluation
 from Utils.DataUtils import DataUtils
 
@@ -42,6 +42,7 @@ class TestORCT(unittest.TestCase):
         filtered = compute_orct2plus3(compute_orct1(twoComplement))
 
         filtered = (filtered + 255) / 2
+
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
             data = compute_orct2plus3inverse(data)
@@ -73,20 +74,63 @@ class TestORCT(unittest.TestCase):
         self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
         pass
 
-    def test_ocrtWithDataset(self):
+    def test_ocrtShahedWithDataset(self):
         rgbImages = self.datasetUtils.loadKodakDataset()
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
-        bayer = cfaImages[2, :, :]
+        psnrs = []
+        ssims = []
+        jpeg2000CompressionRatioAfters = []
 
-        twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
-        twoComplement = twoComplement.astype("float32")
+        def inverseFunction(data):
+            data = data.astype('float32') * 2 - 255
+            data = compute_orct2inverse(data)
+            data = compute_orct1inverse(data)
+            return data
 
-        filtered = compute_orct2(compute_orct1(twoComplement))
+        sampleFunctionReverse = inverseFunction
 
-        filtered = (filtered + 255) / 2
+        for bayer in cfaImages:
+            twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
+            twoComplement = twoComplement.astype("float32")
 
-        self.evaluation.evaluate(filtered, bayer)
-        pass
+            filtered = compute_orct2(compute_orct1(twoComplement))
+
+            filtered = (filtered + 255) / 2
+
+            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
+            psnrs.append(psnr)
+            ssims.append(ssim)
+            jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
+        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio": jpeg2000CompressionRatioAfters}).to_excel("resultsShahedMethod.xlsx")
+
+    def test_ocrtNewMethodWithDataset(self):
+        rgbImages = self.datasetUtils.loadKodakDataset()
+        cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
+        psnrs = []
+        ssims = []
+        jpeg2000CompressionRatioAfters = []
+
+        def inverseFunction(data):
+            data = data.astype('float32') * 2 - 255
+            data = compute_orct2plus3inverse(data)
+            data = compute_orct1inverse(data)
+            return data
+
+        sampleFunctionReverse = inverseFunction
+
+        for bayer in cfaImages:
+            twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
+            twoComplement = twoComplement.astype("float32")
+
+            filtered = compute_orct2plus3(compute_orct1(twoComplement))
+
+            filtered = (filtered + 255) / 2
+
+            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
+            psnrs.append(psnr)
+            ssims.append(ssim)
+            jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
+        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio": jpeg2000CompressionRatioAfters}).to_excel("resultsNewMethod.xlsx")
 
     def test_simpleORCT(self):
         bayer = np.array([[145, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57],
