@@ -42,13 +42,13 @@ class TestORCT(unittest.TestCase):
 
         filtered = compute_orct2plus3(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-        filtered = np.round((filtered + 255) / 2,self.precisionFloatingPoint)
+        filtered = (filtered + 255) * 100
 
         def inverseFunction(data):
-            data = data.astype('float32') * 2 - 255
+            data = data.astype('float32') / 100 - 255
             data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            return np.round(data)
+            return data
 
         sampleFunctionReverse = inverseFunction
         self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
@@ -63,10 +63,10 @@ class TestORCT(unittest.TestCase):
 
         filtered = compute_orct2(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-        filtered = np.round((filtered + 255) / 2,self.precisionFloatingPoint)
+        filtered = (filtered + 255) * 10
 
         def inverseFunction(data):
-            data = data.astype('float32') * 2 - 255
+            data = data.astype('float32') / 10 - 255
             data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
