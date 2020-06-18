@@ -1,7 +1,11 @@
+import io
 import os
 
 import numpy as np
 import cv2
+import pandas as pd
+import rawpy
+import requests
 
 from Utils.CFAGeneratorUtils import RGB2CFAUtils
 
@@ -15,7 +19,20 @@ class DataUtils:
         rgbImages = []
         for file in files:
             img = cv2.imread(root + file)
-            img = cv2.resize(img, (256, 256))
+            # img = cv2.resize(img, (256, 256))
+            rgbImages.append(img)
+
+        rgbImages = np.asarray(rgbImages)
+        return rgbImages
+
+    def loadNikonDataset(self, type="D40"):
+        # download from https://www.kaggle.com/sherylmehta/kodak-dataset
+        root = "../Data/Nikon {}/".format(type)
+        files = os.listdir(root)
+        rgbImages = []
+        for file in files:
+            img = cv2.imread(root + file)
+            # img = cv2.resize(img, (256, 256))
             rgbImages.append(img)
 
         rgbImages = np.asarray(rgbImages)
@@ -24,17 +41,17 @@ class DataUtils:
     def convertDatasetToCFA(self, rgbImages):
         # Convert to CFA
         rgb2CFAUtils = RGB2CFAUtils()
-        n_data, h, w, c = rgbImages.shape
+        n_data=len(rgbImages)
+        h, w, c = rgbImages[0].shape
 
         cfaImages = []
         for i in range(n_data):
             cfaImages.append(rgb2CFAUtils.rgb2CFA(rgbImages[i], show=False))
             print("converting image {0} to CFA: Training".format(i))
         cfaImages = np.asarray(cfaImages)
-        image_size = cfaImages.shape[1]
-        cfaImages = np.reshape(cfaImages, [-1, image_size, image_size])
-        cfaImages = cfaImages.astype('uint8')
-        return cfaImages, image_size
+        # cfaImages = np.reshape(cfaImages, [-1, cfaImages.shape[0], cfaImages.shape[1]])
+        # cfaImages = cfaImages.astype('uint8')
+        return cfaImages, cfaImages.shape
 
     def twoComplementMatrix(self, data):
         comp2 = np.zeros(data.shape, dtype=int)
@@ -53,3 +70,18 @@ class DataUtils:
         bayer = cv2.imread(add)
         bayer = np.sum(bayer, axis=2)
         return bayer
+
+    def saveImageNikon(self):
+        data = pd.read_csv("../Data/RAISE_127.csv")
+
+        addresses = data["NEF"].values
+        Device = data["Device"].values
+        for ind, address in enumerate(addresses):
+            if Device[ind] not in ["Nikon D90", "Nikon D7000", "Nikon D40"]:
+                resp = requests.get(address)
+                with rawpy.imread(io.BytesIO(resp.content)) as raw:
+                    rgbImage = raw.postprocess()
+                    print("read image from {}".format(address))
+                    if not os.path.exists("../Data/" + Device[ind]):
+                        os.mkdir("../Data/" + Device[ind])
+                    cv2.imwrite("../Data/" + Device[ind] + "/" + str(ind) + ".tiff", rgbImage)

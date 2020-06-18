@@ -12,8 +12,8 @@ def compute_orct1(bayer, Alocal=None):
     bayer_number_of_columns = bayer.shape[1]
     final_block = np.zeros((bayer_number_of_rows, bayer_number_of_columns))
 
-    for row_index in range(0, bayer_number_of_rows, 2):
-        for column_index in range(0, bayer_number_of_columns, 2):
+    for row_index in range(0, bayer_number_of_rows-1, 2):
+        for column_index in range(0, bayer_number_of_columns-1, 2):
             gr = bayer[row_index][column_index]
             r = bayer[row_index][column_index + 1]
 

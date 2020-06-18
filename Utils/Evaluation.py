@@ -8,12 +8,15 @@ import lz4.frame
 import numpy as np
 from PIL import Image
 
+from CharPyLS import jpeg_ls
+
 
 class Evaluation:
 
     def __init__(self) -> None:
         super().__init__()
         self.jpeg200Name = "myfile.jp2"
+        self.jpeg200NameLossy = "myfileLossy.jp2"
         self.jpegLossy = "myfile.jpeg"
         self.lzw = "lzw.lz"
 
@@ -81,21 +84,30 @@ class Evaluation:
 
     def compressionRatio(self, data, imageName, verbose):
         # compressions
-        jp2 = glymur.Jp2k(self.jpeg200Name, data=data, cratios=[1])
+        glymur.Jp2k(self.jpeg200Name, data=data, cratios=[1])
+        glymur.Jp2k(self.jpeg200NameLossy, data=data, psnr=[50])
+
         imPillow = Image.fromarray(data)
         imPillow.save(self.jpegLossy, "JPEG", quality=90)
+        jpeg_lsBuffer = jpeg_ls.encode(data)
         compressedImage, compressionRatioLZW, compressedSize = self.applyLZWCompressionOnImage(data)
         # Sizes.
         originalSize = len(data.tostring()) / 1024
         jpeg2000Size = os.stat(self.jpeg200Name).st_size / 1024
+        jpeg200NameLossySize = os.stat(self.jpeg200NameLossy).st_size / 1024
         jpegLossySize = os.stat(self.jpegLossy).st_size / 1024
+        jpegLsSize = len(jpeg_lsBuffer) / 1024
         jpeg2000CompressionRatio = originalSize / jpeg2000Size
         JpegLossyCompressionRatio = originalSize / jpegLossySize
+        JpegLsCompressionRatio = originalSize / jpegLsSize
+        Jpeg2000LossyCompressionRatio = originalSize / jpeg200NameLossySize
         if verbose:
             print('Size of uncompressed {0}: {1} KB'.format(imageName, originalSize))
-            print('compression ratio of JPEG-2000 encoded {0}: {1}'.format(imageName, jpeg2000CompressionRatio))
+            print('compression ratio of JPEG-2000 Lossless encoded {0}: {1}'.format(imageName, jpeg2000CompressionRatio))
+            print('compression ratio of JPEG-2000 Lossy encoded {0}: {1}'.format(imageName, Jpeg2000LossyCompressionRatio))
             print('compression ratio of JPEG-lossy encoded {0}: {1}'.format(imageName, JpegLossyCompressionRatio))
             print('compression ratio of LZW encoded {0}: {1}'.format(imageName, compressionRatioLZW))
+            print('compression ratio of JPEG-LS encoded {0}: {1}'.format(imageName, JpegLsCompressionRatio))
 
         return jpeg2000CompressionRatio, JpegLossyCompressionRatio, compressionRatioLZW
 
@@ -118,6 +130,7 @@ class Evaluation:
             ssim = self.calculate_ssim(retrivedData, originalData)
             psnr = self.calculate_psnr(retrivedData, originalData)
             if verbose:
+                print("**************Quality******************")
                 print("JPEG 2000 : PSNR= {0};  SSIM={1}".format(psnr, ssim))
 
         # Compare image data, before and after.
@@ -125,4 +138,4 @@ class Evaluation:
         if verbose:
             print('\nRestored data is identical to original? {:s}\n'.format(str(is_same)))
 
-        return psnr, ssim, jpeg2000CompressionRatioAfter,jpeg2000CompressionRatioBefore
+        return psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore

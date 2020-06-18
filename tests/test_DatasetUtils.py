@@ -12,3 +12,6 @@ class test_DatasetUtils(unittest.TestCase):
         rgbImages = self.datasetUtils.loadKodakDataset()
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
         self.assertIsNotNone(cfaImages)
+
+    def test_saveNikonImage(self):
+        self.datasetUtils.saveImageNikon()

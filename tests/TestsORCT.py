@@ -41,13 +41,13 @@ class TestORCT(unittest.TestCase):
 
         filtered = compute_orct2plus3(compute_orct1(twoComplement))
 
-        filtered = (filtered + 255) / 2
+        filtered = np.floor((filtered + 255) / 2)
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
             data = compute_orct2plus3inverse(data)
             data = compute_orct1inverse(data)
-            return data
+            return np.round(data)
 
         sampleFunctionReverse = inverseFunction
         self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
@@ -62,7 +62,7 @@ class TestORCT(unittest.TestCase):
 
         filtered = compute_orct2(compute_orct1(twoComplement))
 
-        filtered = (filtered + 255) / 2
+        filtered = np.round((filtered + 255) / 2)
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
@@ -75,7 +75,7 @@ class TestORCT(unittest.TestCase):
         pass
 
     def test_ocrtShahedWithDataset(self):
-        rgbImages = self.datasetUtils.loadKodakDataset()
+        rgbImages = self.datasetUtils.loadNikonDataset("D40")
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
         psnrs = []
         ssims = []
@@ -95,7 +95,7 @@ class TestORCT(unittest.TestCase):
 
             filtered = compute_orct2(compute_orct1(twoComplement))
 
-            filtered = (filtered + 255) / 2
+            filtered = np.round((filtered + 255) / 2)
 
             psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
             psnrs.append(psnr)

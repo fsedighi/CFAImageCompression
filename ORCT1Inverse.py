@@ -15,7 +15,7 @@ def compute_orct1inverse(bayer, Alocal=None):
     # final_block = copy.deepcopy(bayer)
     inverseA = np.linalg.pinv(A)
     for row_index in range(0, bayer_number_of_rows, 2):
-        for column_index in range(0, bayer_number_of_columns, 2):
+        for column_index in range(0, bayer_number_of_columns-1, 2):
             wr = bayer[row_index][column_index]
             dr = bayer[row_index][column_index + 1]
             index_r = dr % 2

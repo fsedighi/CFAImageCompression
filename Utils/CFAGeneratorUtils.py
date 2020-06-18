@@ -9,7 +9,7 @@ class RGB2CFAUtils:
         super().__init__()
 
     def rgb2CFA(self, image, show=False):
-        w, h, c = image.shape
+        h, w, c = image.shape
         cfa = np.zeros((h, w), dtype=np.uint8)
 
         red = image[range(1, h, 2), :, :][:, range(0, w, 2), :][:, :, 0]

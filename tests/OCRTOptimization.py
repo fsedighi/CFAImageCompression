@@ -119,7 +119,7 @@ class TestORCTOptimization(unittest.TestCase):
             mutation=get_mutation("real_pm", eta=20),
             eliminate_duplicates=True
         )
-        termination = get_termination("n_gen", 10)
+        termination = get_termination("n_gen", 5)
         bayer = self.datasetUtils.readCFAImages()
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
         twoComplement = twoComplement.astype("float32")
