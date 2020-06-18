@@ -5,7 +5,8 @@ import numpy as np
 global A
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
 
-def compute_orct1inverse(bayer, Alocal=None):
+
+def compute_orct1inverse(bayer, Alocal=None, precisionFloatingPoint=0):
     if Alocal is not None:
         global A
         A = Alocal
@@ -15,7 +16,7 @@ def compute_orct1inverse(bayer, Alocal=None):
     # final_block = copy.deepcopy(bayer)
     inverseA = np.linalg.pinv(A)
     for row_index in range(0, bayer_number_of_rows, 2):
-        for column_index in range(0, bayer_number_of_columns-1, 2):
+        for column_index in range(0, bayer_number_of_columns - 1, 2):
             wr = bayer[row_index][column_index]
             dr = bayer[row_index][column_index + 1]
             index_r = dr % 2
@@ -32,10 +33,10 @@ def compute_orct1inverse(bayer, Alocal=None):
             converted_gr_r = inverseA @ np.asarray([wr, dr]).transpose()
             converted_gb_b = inverseA @ np.asarray([wb, db]).transpose()
 
-            final_block[row_index][column_index + 1] = converted_gr_r[1]
-            final_block[row_index][column_index] = converted_gr_r[0]
+            final_block[row_index][column_index + 1] = np.round(converted_gr_r[1], precisionFloatingPoint)
+            final_block[row_index][column_index] = np.round(converted_gr_r[0], precisionFloatingPoint)
 
-            final_block[row_index + 1][column_index] = converted_gb_b[1]
-            final_block[row_index + 1][column_index + 1] = converted_gb_b[0]
+            final_block[row_index + 1][column_index] = np.round(converted_gb_b[1], precisionFloatingPoint)
+            final_block[row_index + 1][column_index + 1] = np.round(converted_gb_b[0], precisionFloatingPoint)
 
     return final_block

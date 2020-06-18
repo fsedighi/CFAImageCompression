@@ -5,7 +5,8 @@ import numpy as np
 global A
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
 
-def compute_orct2inverse(bayer, Alocal=None):
+
+def compute_orct2inverse(bayer, Alocal=None, precisionFloatingPoint=0):
     if Alocal is not None:
         global A
         A = Alocal
@@ -17,7 +18,7 @@ def compute_orct2inverse(bayer, Alocal=None):
     for column_index in range(0, bayer_number_of_columns, 2):
         for row_index in range(0, bayer_number_of_rows, 2):
             y = bayer[row_index][column_index]
-            dw = bayer[row_index+1][column_index]
+            dw = bayer[row_index + 1][column_index]
             index = dw % 2
 
             if index == 1:
@@ -27,7 +28,7 @@ def compute_orct2inverse(bayer, Alocal=None):
 
             converted_wb_wr = inverseA @ np.asarray([y, dw]).transpose()
 
-            final_block[row_index][column_index] = converted_wb_wr[1]
-            final_block[row_index + 1][column_index] = converted_wb_wr[0]
+            final_block[row_index][column_index] = np.round(converted_wb_wr[1], precisionFloatingPoint)
+            final_block[row_index + 1][column_index] = np.round(converted_wb_wr[0], precisionFloatingPoint)
 
     return final_block

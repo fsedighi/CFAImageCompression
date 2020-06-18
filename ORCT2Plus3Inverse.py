@@ -1,11 +1,12 @@
 import copy
 
 import numpy as np
+
 global A
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
 
 
-def compute_orct2plus3inverse(bayer, Alocal=None):
+def compute_orct2plus3inverse(bayer, Alocal=None, precisionFloatingPoint=0):
     if Alocal is not None:
         global A
         A = Alocal
@@ -20,10 +21,10 @@ def compute_orct2plus3inverse(bayer, Alocal=None):
             w2 = final_block[row_index - 1][column_index]
             converted_w1_w2 = inverseA @ np.array([w1, w2]).transpose()
             if index == 0:
-                final_block[row_index][column_index] = np.ceil(converted_w1_w2[0])
-                final_block[row_index - 1][column_index] = np.ceil(converted_w1_w2[1])
+                final_block[row_index][column_index] = np.round(converted_w1_w2[0],precisionFloatingPoint)
+                final_block[row_index - 1][column_index] = np.round(converted_w1_w2[1],precisionFloatingPoint)
             elif index == 1:
-                final_block[row_index][column_index] = np.floor(converted_w1_w2[0])
-                final_block[row_index - 1][column_index] = np.floor(converted_w1_w2[1])
+                final_block[row_index][column_index] = np.round(converted_w1_w2[0],precisionFloatingPoint)
+                final_block[row_index - 1][column_index] = np.round(converted_w1_w2[1],precisionFloatingPoint)
 
     return final_block

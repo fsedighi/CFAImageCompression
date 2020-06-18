@@ -20,17 +20,18 @@ class TestORCT(unittest.TestCase):
         super().__init__(methodName)
         self.datasetUtils = DataUtils()
         self.evaluation = Evaluation()
+        self.precisionFloatingPoint = 3
 
     def test_orct1(self):
         bayer = cv2.imread("../Data/image.bmp")
         bayer = np.sum(bayer, axis=2).astype('float64')
-        orct1Filtered = compute_orct1(bayer)
+        orct1Filtered = compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
         pass
 
     def test_orct2(self):
         bayer = cv2.imread("../Data/image.bmp")
         bayer = np.sum(bayer, axis=2).astype('float64')
-        orct2Filtered = compute_orct2(bayer)
+        orct2Filtered = compute_orct2(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
         pass
 
     def test_orct123Plus(self):
@@ -39,14 +40,14 @@ class TestORCT(unittest.TestCase):
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
         twoComplement = twoComplement.astype("float32")
 
-        filtered = compute_orct2plus3(compute_orct1(twoComplement))
+        filtered = compute_orct2plus3(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-        filtered = np.floor((filtered + 255) / 2)
+        filtered = np.round((filtered + 255) / 2,self.precisionFloatingPoint)
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
-            data = compute_orct2plus3inverse(data)
-            data = compute_orct1inverse(data)
+            data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return np.round(data)
 
         sampleFunctionReverse = inverseFunction
@@ -60,14 +61,14 @@ class TestORCT(unittest.TestCase):
         twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
         twoComplement = twoComplement.astype("float32")
 
-        filtered = compute_orct2(compute_orct1(twoComplement))
+        filtered = compute_orct2(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-        filtered = np.round((filtered + 255) / 2)
+        filtered = np.round((filtered + 255) / 2,self.precisionFloatingPoint)
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
-            data = compute_orct2inverse(data)
-            data = compute_orct1inverse(data)
+            data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
 
         sampleFunctionReverse = inverseFunction
@@ -83,8 +84,8 @@ class TestORCT(unittest.TestCase):
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
-            data = compute_orct2inverse(data)
-            data = compute_orct1inverse(data)
+            data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
 
         sampleFunctionReverse = inverseFunction
@@ -93,9 +94,9 @@ class TestORCT(unittest.TestCase):
             twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
             twoComplement = twoComplement.astype("float32")
 
-            filtered = compute_orct2(compute_orct1(twoComplement))
+            filtered = compute_orct2(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-            filtered = np.round((filtered + 255) / 2)
+            filtered = np.round((filtered + 255) / 2, self.precisionFloatingPoint)
 
             psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
             psnrs.append(psnr)
@@ -112,8 +113,8 @@ class TestORCT(unittest.TestCase):
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
-            data = compute_orct2plus3inverse(data)
-            data = compute_orct1inverse(data)
+            data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
 
         sampleFunctionReverse = inverseFunction
@@ -122,9 +123,9 @@ class TestORCT(unittest.TestCase):
             twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
             twoComplement = twoComplement.astype("float32")
 
-            filtered = compute_orct2plus3(compute_orct1(twoComplement))
+            filtered = compute_orct2plus3(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-            filtered = (filtered + 255) / 2
+            filtered = np.round((filtered + 255) / 2, self.precisionFloatingPoint)
 
             psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
             psnrs.append(psnr)

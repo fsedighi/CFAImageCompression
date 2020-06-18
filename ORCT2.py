@@ -4,7 +4,8 @@ import numpy as np
 global A
 A = np.array([[1 / 2, 1 / 2], [-1, 1]])
 
-def compute_orct2(bayer, Alocal=None):
+
+def compute_orct2(bayer, Alocal=None, precisionFloatingPoint=0):
     if Alocal is not None:
         global A
         A = Alocal
@@ -19,7 +20,7 @@ def compute_orct2(bayer, Alocal=None):
 
             converted_y_dw = A @ np.asarray([wb, wr]).transpose()
 
-            final_block[row_index][column_index] = np.floor(converted_y_dw[0])
-            final_block[row_index + 1][column_index] = np.floor(converted_y_dw[1])
+            final_block[row_index][column_index] = np.round(converted_y_dw[0],precisionFloatingPoint)
+            final_block[row_index + 1][column_index] = np.round(converted_y_dw[1],precisionFloatingPoint)
 
     return final_block
