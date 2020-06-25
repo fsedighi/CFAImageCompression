@@ -19,17 +19,22 @@ def compute_orct1inverse(bayer, Alocal=None, precisionFloatingPoint=0):
         for column_index in range(0, bayer_number_of_columns - 1, 2):
             wr = bayer[row_index][column_index]
             dr = bayer[row_index][column_index + 1]
-
+            index_r = dr % 2
             wb = bayer[row_index + 1][column_index]
             db = bayer[row_index + 1][column_index + 1]
+            index_b = db % 2
 
+            if index_r == 1:
+                wr += 0.5
+            if index_b == 1:
+                wb += 0.5
             converted_gr_r = inverseA @ np.asarray([wr, dr]).transpose()
             converted_gb_b = inverseA @ np.asarray([wb, db]).transpose()
 
             final_block[row_index][column_index + 1] = converted_gr_r[1]
-            final_block[row_index][column_index] = converted_gr_r[0]
+            final_block[row_index][column_index] = np.floor(converted_gr_r[0])
 
-            final_block[row_index + 1][column_index] = converted_gb_b[1]
+            final_block[row_index + 1][column_index] = np.floor(converted_gb_b[1])
             final_block[row_index + 1][column_index + 1] = converted_gb_b[0]
 
     return final_block

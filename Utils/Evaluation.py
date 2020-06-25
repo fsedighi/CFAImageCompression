@@ -82,7 +82,7 @@ class Evaluation:
         else:
             raise ValueError('Wrong input image dimensions.')
 
-    def compressionRatio(self, data, imageName, verbose):
+    def compressionRatio(self, data, imageName, verbose, precisionFloatingPoint):
         # compressions
         glymur.Jp2k(self.jpeg200Name, data=data, cratios=[1])
         glymur.Jp2k(self.jpeg200NameLossy, data=data, cratios=[5])
@@ -93,6 +93,8 @@ class Evaluation:
         # imPillow = Image.new("I", data.T.shape)
         # imPillow.frombytes(array_buffer, 'raw', "I;16")
         # imPillow.save(self.jpegLossy, "JPEG", quality=90)
+
+        bitsNumber = 8+precisionFloatingPoint
 
         jpeg_lsBuffer = jpeg_ls.encode(data)
         compressedImage, compressionRatioLZW, compressedSize = self.applyLZWCompressionOnImage(data)
@@ -108,13 +110,13 @@ class Evaluation:
         Jpeg2000LossyCompressionRatio = originalSize / jpeg200NameLossySize
         if verbose:
             print('Size of uncompressed {0}: {1} KB'.format(imageName, originalSize))
-            print('compression ratio of JPEG-2000 Lossless encoded {0}: {1}'.format(imageName, jpeg2000CompressionRatio))
-            print('compression ratio of JPEG-2000 Lossy encoded {0}: {1}'.format(imageName, Jpeg2000LossyCompressionRatio))
+            print('compression ratio of JPEG-2000 Lossless encoded {0}: {1} bpp'.format(imageName, bitsNumber/jpeg2000CompressionRatio))
+            print('compression ratio of JPEG-2000 Lossy encoded {0}: {1} bpp'.format(imageName, bitsNumber/Jpeg2000LossyCompressionRatio))
             # print('compression ratio of JPEG-lossy encoded {0}: {1}'.format(imageName, JpegLossyCompressionRatio))
-            print('compression ratio of LZW encoded {0}: {1}'.format(imageName, compressionRatioLZW))
-            print('compression ratio of JPEG-LS encoded {0}: {1}'.format(imageName, JpegLsCompressionRatio))
+            print('compression ratio of LZW encoded {0}: {1} bpp'.format(imageName, bitsNumber/compressionRatioLZW))
+            print('compression ratio of JPEG-LS encoded {0}: {1} bpp'.format(imageName, bitsNumber/JpegLsCompressionRatio))
 
-        return jpeg2000CompressionRatio, JpegLsCompressionRatio, compressionRatioLZW
+        return bitsNumber/jpeg2000CompressionRatio, bitsNumber/JpegLsCompressionRatio, bitsNumber/compressionRatioLZW, bitsNumber/Jpeg2000LossyCompressionRatio
 
     def evaluate(self, filteredData, originalData, inverseFilterFunction=None, verbose=True, precisionFloatingPoint=0):
         if precisionFloatingPoint == 0:
@@ -124,10 +126,10 @@ class Evaluation:
             filteredData = np.abs(np.round(filteredData)).astype('uint16')
             originalData = np.abs(np.round(originalData)).astype('uint16')
 
-        jpeg2000CompressionRatioBefore, JpegLsCompressionRatio, compressionRatioLZWBefore = self.compressionRatio(originalData, "Before", verbose)
+        jpeg2000CompressionRatioBefore, JpegLsCompressionRatio, compressionRatioLZWBefore,compressionRatiojpeg2000LossyAfter = self.compressionRatio(originalData, "Before", verbose, precisionFloatingPoint)
         if verbose:
             print("**************************************************")
-        jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter = self.compressionRatio(filteredData, "After", verbose)
+        jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter ,compressionRatiojpeg2000LossyAfter= self.compressionRatio(filteredData, "After", verbose, precisionFloatingPoint)
 
         # Decompress.
         psnr = None
@@ -142,4 +144,4 @@ class Evaluation:
                 print("**************Quality******************")
                 print("JPEG 2000 : PSNR= {0};  SSIM={1}".format(psnr, ssim))
 
-        return psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore
+        return psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio,compressionRatioLZWAfter,compressionRatiojpeg2000LossyAfter

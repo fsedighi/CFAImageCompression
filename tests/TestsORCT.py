@@ -39,10 +39,11 @@ class TestORCT(unittest.TestCase):
 
         bayer = bayer.astype("float64")
 
-        filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-        filtered = (filtered + 256) / 2
+        orct1Res = compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
+        filtered = compute_orct2(orct1Res, precisionFloatingPoint=self.precisionFloatingPoint)
+        # filtered = (filtered)/2
 
-        # filtered = (filtered + 128)
+        filtered = (filtered + 256) / 2
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 256
@@ -92,11 +93,13 @@ class TestORCT(unittest.TestCase):
         psnrs = []
         ssims = []
         jpeg2000CompressionRatioAfters = []
-
+        JpegLsCompressionRatios = []
+        compressionRatioLZWs = []
+        compressionRatiojpeg2000LossyAfters = []
         # filtered = (filtered + 128)
 
         def inverseFunction(data):
-            data = data.astype('float32') * 2 - 255
+            data = data.astype('float32') * 2 - 256
             data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
@@ -107,14 +110,22 @@ class TestORCT(unittest.TestCase):
             bayer = bayer.astype("float32")
 
             filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-            filtered = (filtered + 255) / 2
+            filtered = (filtered + 256) / 2
 
-            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
-                                                                                                                 precisionFloatingPoint=self.precisionFloatingPoint)
+            psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter = self.evaluation.evaluate(filtered, bayer,
+                                                                                                                                                                       sampleFunctionReverse,
+                                                                                                                                                                       precisionFloatingPoint=self.precisionFloatingPoint)
+
             psnrs.append(psnr)
             ssims.append(ssim)
             jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
-        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio": jpeg2000CompressionRatioAfters}).to_excel("resultsShahedMethod.xlsx")
+            JpegLsCompressionRatios.append(JpegLsCompressionRatio)
+            compressionRatioLZWs.append(compressionRatioLZWAfter)
+            compressionRatiojpeg2000LossyAfters.append(compressionRatiojpeg2000LossyAfter)
+        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio (bpp)": jpeg2000CompressionRatioAfters,
+                      "JpegLsCompressionRatio": JpegLsCompressionRatios,
+                      "compressionRatioLZW": compressionRatioLZWs,
+                      "compressionRatiojpeg2000Lossy": compressionRatiojpeg2000LossyAfters}).to_excel("resultsShahedMethod.xlsx")
 
     def test_ocrtNewMethodWithDataset(self):
         rgbImages = self.datasetUtils.loadKodakDataset()
@@ -122,6 +133,9 @@ class TestORCT(unittest.TestCase):
         psnrs = []
         ssims = []
         jpeg2000CompressionRatioAfters = []
+        JpegLsCompressionRatios = []
+        compressionRatioLZWs = []
+        compressionRatiojpeg2000LossyAfters = []
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 255
@@ -138,12 +152,19 @@ class TestORCT(unittest.TestCase):
 
             filtered = np.round((filtered + 255) / 2, self.precisionFloatingPoint)
 
-            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
-                                                                                                                 precisionFloatingPoint=self.precisionFloatingPoint)
+            psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter = self.evaluation.evaluate(filtered, bayer,
+                                                                                                                                                                       sampleFunctionReverse,
+                                                                                                                                                                       precisionFloatingPoint=self.precisionFloatingPoint)
             psnrs.append(psnr)
             ssims.append(ssim)
             jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
-        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio": jpeg2000CompressionRatioAfters}).to_excel("resultsNewMethod.xlsx")
+            JpegLsCompressionRatios.append(JpegLsCompressionRatio)
+            compressionRatioLZWs.append(compressionRatioLZWAfter)
+            compressionRatiojpeg2000LossyAfters.append(compressionRatiojpeg2000LossyAfter)
+        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio (bpp)": jpeg2000CompressionRatioAfters,
+                      "JpegLsCompressionRatio": JpegLsCompressionRatios,
+                      "compressionRatioLZW": compressionRatioLZWs,
+                      "compressionRatiojpeg2000Lossy":compressionRatiojpeg2000LossyAfters}).to_excel("resultsNewMethod.xlsx")
 
     def test_simpleORCT(self):
         bayer = np.array([[145, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57],
