@@ -37,26 +37,15 @@ class TestORCT(unittest.TestCase):
     def test_orct12(self):
         bayer = self.datasetUtils.readCFAImages()
 
-        bayer = bayer.astype("uint8")
+        bayer = bayer.astype("float64")
 
         filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-
-        x = np.ones(filtered.shape)
-        x[1::2, ::2] = -1
-        x[::2, 1::2] = -1
-        filtered = np.multiply(x, filtered)
-        mask = np.multiply(filtered > -3, filtered < 3)
-        filtered[mask] = np.abs(filtered[mask])
-        negativemask = filtered < 0
+        filtered = (filtered + 256) / 2
 
         # filtered = (filtered + 128)
 
         def inverseFunction(data):
-            data = np.multiply(x, data).astype('float32')
-            mask = np.multiply(data > -3, data < 3)
-            data[mask] = np.abs(data[mask])
-            data[negativemask] = -np.abs(data[negativemask])
-            # data = data.astype('float32') - 128
+            data = data.astype('float32') * 2 - 256
             data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
@@ -104,32 +93,21 @@ class TestORCT(unittest.TestCase):
         ssims = []
         jpeg2000CompressionRatioAfters = []
 
-
         # filtered = (filtered + 128)
 
         def inverseFunction(data):
-            data = np.multiply(x, data).astype('float32')
-            mask = np.multiply(data > -3, data < 3)
-            data[mask] = np.abs(data[mask])
-            data[negativemask] = -np.abs(data[negativemask])
-            # data = data.astype('float32') - 128
+            data = data.astype('float32') * 2 - 255
             data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
+
         sampleFunctionReverse = inverseFunction
 
         for bayer in cfaImages:
             bayer = bayer.astype("float32")
 
             filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-
-            x = np.ones(filtered.shape)
-            x[1::2, ::2] = -1
-            x[::2, 1::2] = -1
-            filtered = np.multiply(x, filtered)
-            mask = np.multiply(filtered > -3, filtered < 3)
-            filtered[mask] = np.abs(filtered[mask])
-            negativemask = filtered < 0
+            filtered = (filtered + 255) / 2
 
             psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
                                                                                                                  precisionFloatingPoint=self.precisionFloatingPoint)
