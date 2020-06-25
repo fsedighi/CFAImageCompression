@@ -21,10 +21,10 @@ def compute_orct2plus3(bayer, Alocal=None, precisionFloatingPoint=0):
             w2 = final_block[row_index + 1][column_index]
             converted_w1_w2 = A @ np.array([w2, w1]).transpose()
             if index == 0:
-                final_block[row_index][column_index] = np.round(converted_w1_w2[1], precisionFloatingPoint)
-                final_block[row_index + 1][column_index] = np.round(converted_w1_w2[0], precisionFloatingPoint)
+                final_block[row_index][column_index] = np.floor(converted_w1_w2[1])
+                final_block[row_index + 1][column_index] = np.floor(converted_w1_w2[0])
             elif index == 1:
-                final_block[row_index][column_index] = np.round(converted_w1_w2[1], precisionFloatingPoint)
-                final_block[row_index + 1][column_index] = np.round(converted_w1_w2[0], precisionFloatingPoint)
+                final_block[row_index][column_index] = np.ceil(converted_w1_w2[1])
+                final_block[row_index + 1][column_index] = np.ceil(converted_w1_w2[0])
 
     return final_block

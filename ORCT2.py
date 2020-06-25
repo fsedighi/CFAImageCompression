@@ -20,7 +20,7 @@ def compute_orct2(bayer, Alocal=None, precisionFloatingPoint=0):
 
             converted_y_dw = A @ np.asarray([wb, wr]).transpose()
 
-            final_block[row_index][column_index] = np.round(converted_y_dw[0],precisionFloatingPoint)
-            final_block[row_index + 1][column_index] = np.round(converted_y_dw[1],precisionFloatingPoint)
+            final_block[row_index][column_index] = converted_y_dw[0]
+            final_block[row_index + 1][column_index] = converted_y_dw[1]
 
     return final_block

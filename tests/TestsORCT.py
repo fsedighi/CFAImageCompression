@@ -20,7 +20,7 @@ class TestORCT(unittest.TestCase):
         super().__init__(methodName)
         self.datasetUtils = DataUtils()
         self.evaluation = Evaluation()
-        self.precisionFloatingPoint = 3
+        self.precisionFloatingPoint = 0
 
     def test_orct1(self):
         bayer = cv2.imread("../Data/image.bmp")
@@ -34,71 +34,105 @@ class TestORCT(unittest.TestCase):
         orct2Filtered = compute_orct2(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
         pass
 
+    def test_orct12(self):
+        bayer = self.datasetUtils.readCFAImages()
+
+        bayer = bayer.astype("uint8")
+
+        filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+
+        x = np.ones(filtered.shape)
+        x[1::2, ::2] = -1
+        x[::2, 1::2] = -1
+        filtered = np.multiply(x, filtered)
+        mask = np.multiply(filtered > -3, filtered < 3)
+        filtered[mask] = np.abs(filtered[mask])
+        negativemask = filtered < 0
+
+        # filtered = (filtered + 128)
+
+        def inverseFunction(data):
+            data = np.multiply(x, data).astype('float32')
+            mask = np.multiply(data > -3, data < 3)
+            data[mask] = np.abs(data[mask])
+            data[negativemask] = -np.abs(data[negativemask])
+            # data = data.astype('float32') - 128
+            data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            return data
+
+        sampleFunctionReverse = inverseFunction
+        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse, precisionFloatingPoint=self.precisionFloatingPoint)
+        pass
+
     def test_orct123Plus(self):
         bayer = self.datasetUtils.readCFAImages()
 
-        twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
-        twoComplement = twoComplement.astype("float32")
+        bayer = bayer.astype("float32")
 
-        filtered = compute_orct2plus3(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+        filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-        filtered = (filtered + 255) * 100
+        x = np.ones(filtered.shape)
+        x[1::2, ::2] = -1
+        x[::2, 1::2] = -1
+        filtered = np.multiply(x, filtered)
+        mask = np.multiply(filtered > -3, filtered < 3)
+        filtered[mask] = np.abs(filtered[mask])
+        negativemask = filtered < 0
+
+        # filtered = (filtered + 128)
 
         def inverseFunction(data):
-            data = data.astype('float32') / 100 - 255
+            data = np.multiply(x, data).astype('float32')
+            mask = np.multiply(data > -3, data < 3)
+            data[mask] = np.abs(data[mask])
+            data[negativemask] = -np.abs(data[negativemask])
+            # data = data.astype('float32') - 128
             data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
 
         sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
+        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse, precisionFloatingPoint=self.precisionFloatingPoint)
 
-        pass
-
-    def test_orct12(self):
-        bayer = self.datasetUtils.readCFAImages()
-
-        twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
-        twoComplement = twoComplement.astype("float32")
-
-        filtered = compute_orct2(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-
-        filtered = (filtered + 255) * 10
-
-        def inverseFunction(data):
-            data = data.astype('float32') / 10 - 255
-            data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            return data
-
-        sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, twoComplement, sampleFunctionReverse)
         pass
 
     def test_ocrtShahedWithDataset(self):
-        rgbImages = self.datasetUtils.loadNikonDataset("D40")
+        rgbImages = self.datasetUtils.loadKodakDataset()
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
         psnrs = []
         ssims = []
         jpeg2000CompressionRatioAfters = []
 
+
+        # filtered = (filtered + 128)
+
         def inverseFunction(data):
-            data = data.astype('float32') * 2 - 255
+            data = np.multiply(x, data).astype('float32')
+            mask = np.multiply(data > -3, data < 3)
+            data[mask] = np.abs(data[mask])
+            data[negativemask] = -np.abs(data[negativemask])
+            # data = data.astype('float32') - 128
             data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
-
         sampleFunctionReverse = inverseFunction
 
         for bayer in cfaImages:
-            twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
-            twoComplement = twoComplement.astype("float32")
+            bayer = bayer.astype("float32")
 
-            filtered = compute_orct2(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+            filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-            filtered = np.round((filtered + 255) / 2, self.precisionFloatingPoint)
+            x = np.ones(filtered.shape)
+            x[1::2, ::2] = -1
+            x[::2, 1::2] = -1
+            filtered = np.multiply(x, filtered)
+            mask = np.multiply(filtered > -3, filtered < 3)
+            filtered[mask] = np.abs(filtered[mask])
+            negativemask = filtered < 0
 
-            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
+            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
+                                                                                                                 precisionFloatingPoint=self.precisionFloatingPoint)
             psnrs.append(psnr)
             ssims.append(ssim)
             jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
@@ -120,14 +154,14 @@ class TestORCT(unittest.TestCase):
         sampleFunctionReverse = inverseFunction
 
         for bayer in cfaImages:
-            twoComplement = self.datasetUtils.twoComplementMatrix(bayer)
-            twoComplement = twoComplement.astype("float32")
+            bayer = bayer.astype("float32")
 
-            filtered = compute_orct2plus3(compute_orct1(twoComplement, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+            filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
             filtered = np.round((filtered + 255) / 2, self.precisionFloatingPoint)
 
-            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse)
+            psnr, ssim, jpeg2000CompressionRatioAfter, jpeg2000CompressionRatioBefore = self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
+                                                                                                                 precisionFloatingPoint=self.precisionFloatingPoint)
             psnrs.append(psnr)
             ssims.append(ssim)
             jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
