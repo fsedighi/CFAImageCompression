@@ -52,7 +52,8 @@ class TestORCT(unittest.TestCase):
             return data
 
         sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse, precisionFloatingPoint=self.precisionFloatingPoint)
+        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
+                                 precisionFloatingPoint=self.precisionFloatingPoint)
         pass
 
     def test_orct123Plus(self):
@@ -60,23 +61,25 @@ class TestORCT(unittest.TestCase):
 
         bayer = bayer.astype("float32")
 
-        filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+        orct1Res = compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct2p3 = compute_orct2plus3(orct1Res, precisionFloatingPoint=self.precisionFloatingPoint)
 
-        x = np.ones(filtered.shape)
-        x[1::2, ::2] = -1
-        x[::2, 1::2] = -1
-        filtered = np.multiply(x, filtered)
-        mask = np.multiply(filtered > -3, filtered < 3)
-        filtered[mask] = np.abs(filtered[mask])
-        negativemask = filtered < 0
+        x = np.ones(orct2p3.shape)
+        # x[1::2, ::2] = -1
+        # x[::2, 1::2] = -1
+        x[::2] = -1
+        filtered = np.multiply(x, orct2p3)
+        # mask = np.multiply(filtered > -3, filtered < 3)
+        # filtered[mask] = np.abs(filtered[mask])
+        # negativemask = filtered < 0
 
         # filtered = (filtered + 128)
 
         def inverseFunction(data):
             data = np.multiply(x, data).astype('float32')
-            mask = np.multiply(data > -3, data < 3)
-            data[mask] = np.abs(data[mask])
-            data[negativemask] = -np.abs(data[negativemask])
+            # mask = np.multiply(data > -3, data < 3)
+            # data[mask] = np.abs(data[mask])
+            # data[negativemask] = -np.abs(data[negativemask])
             # data = data.astype('float32') - 128
             data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
