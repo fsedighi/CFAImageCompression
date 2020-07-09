@@ -1,3 +1,4 @@
+import copy
 import unittest
 
 import numpy as np
@@ -5,6 +6,8 @@ from ORCT1 import compute_orct1
 import cv2
 
 from ORCT1Inverse import compute_orct1inverse
+from ORCT1InverseV2 import compute_orct1inverseV2
+from ORCT1V2 import compute_orct1V2
 from ORCT2 import compute_orct2
 from ORCT2Inverse import compute_orct2inverse
 from ORCT2Plus3 import compute_orct2plus3
@@ -34,6 +37,38 @@ class TestORCT(unittest.TestCase):
         orct2Filtered = compute_orct2(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
         pass
 
+    def test_orct23PlusReversible(self):
+        bayer = cv2.imread("../Data/image.bmp")
+        bayer = np.sum(bayer, axis=2).astype('float64')
+        orct23Filtered = compute_orct2plus3(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct23FilteredInversed = compute_orct2plus3inverse(orct23Filtered, precisionFloatingPoint=self.precisionFloatingPoint)
+        print("PSNR: {}".format(self.evaluation.calculate_psnr(bayer, np.round(orct23FilteredInversed))))
+
+    def test_orct1Reversible(self):
+        bayer = cv2.imread("../Data/image.bmp")
+        bayer = np.sum(bayer, axis=2).astype('float64')
+        orct1Filtered = compute_orct1V2(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct1FilteredInversed = compute_orct1inverseV2(orct1Filtered, precisionFloatingPoint=self.precisionFloatingPoint)
+        print("PSNR: {}".format(self.evaluation.calculate_psnr(bayer, np.round(orct1FilteredInversed))))
+
+    def test_orct123Reversible(self):
+        bayer = cv2.imread("../Data/image.bmp")
+        bayer = np.sum(bayer, axis=2).astype('float64')
+        orct1Filtered = compute_orct1V2(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct23Filtered = compute_orct2plus3(orct1Filtered, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct23FilteredNormalized = copy.deepcopy(orct23Filtered)
+        orct23FilteredNormalized[orct23FilteredNormalized == 0] = -256
+        orct23FilteredNormalized = (orct23FilteredNormalized + 256) / 2
+        orct23FilteredNormalized = np.ceil(orct23FilteredNormalized)
+        orct23FilteredNormalized = orct23FilteredNormalized * 2 - 256
+        orct23FilteredNormalized[orct23FilteredNormalized == -256] = 0
+        orct23Filtered = orct23FilteredNormalized
+        orct23FilteredInversed = compute_orct2plus3inverse(orct23Filtered, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct1FilteredInversed = compute_orct1inverseV2(orct23FilteredInversed, precisionFloatingPoint=self.precisionFloatingPoint)
+
+        print("PSNR: {}".format(self.evaluation.calculate_psnr(np.round(orct23FilteredInversed), np.round(orct1Filtered))))
+        print("PSNR: {}".format(self.evaluation.calculate_psnr(bayer, np.round(orct1FilteredInversed))))
+
     def test_orct12(self):
         bayer = self.datasetUtils.readCFAImages()
 
@@ -43,17 +78,19 @@ class TestORCT(unittest.TestCase):
         filtered = compute_orct2(orct1Res, precisionFloatingPoint=self.precisionFloatingPoint)
         # filtered = (filtered)/2
 
+        filtered[filtered == 0] = -256
         filtered = (filtered + 256) / 2
 
         def inverseFunction(data):
-            data = data.astype('float32') * 2 - 256
+            data = data.astype('float32')
+            data = data * 2 - 256
+            data[data == -256] = 0
             data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
 
         sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse,
-                                 precisionFloatingPoint=self.precisionFloatingPoint)
+        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse, precisionFloatingPoint=self.precisionFloatingPoint)
         pass
 
     def test_orct123Plus(self):
@@ -61,32 +98,23 @@ class TestORCT(unittest.TestCase):
 
         bayer = bayer.astype("float32")
 
-        orct1Res = compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
-        orct2p3 = compute_orct2plus3(orct1Res, precisionFloatingPoint=self.precisionFloatingPoint)
+        orct_1 = compute_orct1V2(bayer, precisionFloatingPoint=self.precisionFloatingPoint)
+        filtered = compute_orct2plus3(orct_1, precisionFloatingPoint=self.precisionFloatingPoint)
 
-        x = np.ones(orct2p3.shape)
-        # x[1::2, ::2] = -1
-        # x[::2, 1::2] = -1
-        x[::2] = -1
-        filtered = np.multiply(x, orct2p3)
-        # mask = np.multiply(filtered > -3, filtered < 3)
-        # filtered[mask] = np.abs(filtered[mask])
-        # negativemask = filtered < 0
-
-        # filtered = (filtered + 128)
+        filtered[filtered == 0] = -256
+        filtered = (filtered + 256) / 2
+        filtered = np.ceil(filtered)
 
         def inverseFunction(data):
-            data = np.multiply(x, data).astype('float32')
-            # mask = np.multiply(data > -3, data < 3)
-            # data[mask] = np.abs(data[mask])
-            # data[negativemask] = -np.abs(data[negativemask])
-            # data = data.astype('float32') - 128
+            data = data.astype('float32')
+            data = data * 2 - 256
+            data[data == -256] = 0
             data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            return data
+            data = compute_orct1inverseV2(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            return np.round(data)
 
         sampleFunctionReverse = inverseFunction
-        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse, precisionFloatingPoint=self.precisionFloatingPoint)
+        self.evaluation.evaluate(filtered, bayer, sampleFunctionReverse, precisionFloatingPoint=self.precisionFloatingPoint, roundingMethod="ceil")
 
         pass
 
@@ -99,6 +127,7 @@ class TestORCT(unittest.TestCase):
         JpegLsCompressionRatios = []
         compressionRatioLZWs = []
         compressionRatiojpeg2000LossyAfters = []
+
         # filtered = (filtered + 128)
 
         def inverseFunction(data):
@@ -141,10 +170,12 @@ class TestORCT(unittest.TestCase):
         compressionRatiojpeg2000LossyAfters = []
 
         def inverseFunction(data):
-            data = data.astype('float32') * 2 - 255
+            data = data.astype('float32')
+            data = data * 2 - 256
+            data[data == -256] = 0
             data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            return data
+            data = compute_orct1inverseV2(data, precisionFloatingPoint=self.precisionFloatingPoint)
+            return np.round(data)
 
         sampleFunctionReverse = inverseFunction
 
@@ -153,11 +184,14 @@ class TestORCT(unittest.TestCase):
 
             filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
 
-            filtered = np.round((filtered + 255) / 2, self.precisionFloatingPoint)
+            filtered[filtered == 0] = -256
+            filtered = (filtered + 256) / 2
+            filtered = np.ceil(filtered)
 
             psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter = self.evaluation.evaluate(filtered, bayer,
                                                                                                                                                                        sampleFunctionReverse,
-                                                                                                                                                                       precisionFloatingPoint=self.precisionFloatingPoint)
+                                                                                                                                                                       precisionFloatingPoint=self.precisionFloatingPoint,
+                                                                                                                                                                       roundingMethod="ceil")
             psnrs.append(psnr)
             ssims.append(ssim)
             jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
@@ -167,7 +201,7 @@ class TestORCT(unittest.TestCase):
         pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio (bpp)": jpeg2000CompressionRatioAfters,
                       "JpegLsCompressionRatio": JpegLsCompressionRatios,
                       "compressionRatioLZW": compressionRatioLZWs,
-                      "compressionRatiojpeg2000Lossy":compressionRatiojpeg2000LossyAfters}).to_excel("resultsNewMethod.xlsx")
+                      "compressionRatiojpeg2000Lossy": compressionRatiojpeg2000LossyAfters}).to_excel("resultsNewMethod.xlsx")
 
     def test_simpleORCT(self):
         bayer = np.array([[145, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57],

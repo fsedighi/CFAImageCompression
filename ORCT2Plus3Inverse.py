@@ -20,7 +20,6 @@ def compute_orct2plus3inverse(bayer, Alocal=None, precisionFloatingPoint=0):
             w1 = final_block[row_index][column_index]
             w2 = final_block[row_index - 1][column_index]
             converted_w1_w2 = inverseA @ np.array([w1, w2]).transpose()
-
             if index == 0:
                 final_block[row_index][column_index] = np.ceil(converted_w1_w2[0])
                 final_block[row_index - 1][column_index] = np.ceil(converted_w1_w2[1])
@@ -29,4 +28,3 @@ def compute_orct2plus3inverse(bayer, Alocal=None, precisionFloatingPoint=0):
                 final_block[row_index - 1][column_index] = np.floor(converted_w1_w2[1])
 
     return final_block
-
