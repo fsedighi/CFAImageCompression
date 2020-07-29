@@ -129,10 +129,11 @@ class TestORCT(unittest.TestCase):
         compressionRatiojpeg2000LossyAfters = []
 
         # filtered = (filtered + 128)
+        # filtered[:, 1::2] = filtered[:, 1::2] / 2 + 128
 
         def inverseFunction(data):
             data = data.astype('float32') * 2 - 256
-            data = compute_orct2inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+
             data = compute_orct1inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return data
 
@@ -142,6 +143,7 @@ class TestORCT(unittest.TestCase):
             bayer = bayer.astype("float32")
 
             filtered = compute_orct2(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+            test_sample = filtered
             filtered = (filtered + 256) / 2
 
             psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter = self.evaluation.evaluate(filtered, bayer,
@@ -172,7 +174,6 @@ class TestORCT(unittest.TestCase):
         def inverseFunction(data):
             data = data.astype('float32')
             data = data * 2 - 256
-            data[data == -256] = 0
             data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
             data = compute_orct1inverseV2(data, precisionFloatingPoint=self.precisionFloatingPoint)
             return np.round(data)
@@ -183,8 +184,7 @@ class TestORCT(unittest.TestCase):
             bayer = bayer.astype("float32")
 
             filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-
-            filtered[filtered == 0] = -256
+            test_sample = filtered
             filtered = (filtered + 256) / 2
             filtered = np.ceil(filtered)
 
