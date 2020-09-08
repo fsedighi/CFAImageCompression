@@ -8,10 +8,12 @@ class RGB2CFAUtils:
     def __init__(self) -> None:
         super().__init__()
 
-    def rgb2CFA(self, image, show=False):
+    def rgb2CFA(self, image, show=False,res=0):
         h, w, c = image.shape
-        cfa = np.zeros((h, w), dtype=np.uint8)
-
+        if res==0:
+            cfa = np.zeros((h, w), dtype=np.uint8)
+        else:
+            cfa = np.zeros((h, w), dtype=np.uint16)
         red = image[range(1, h, 2), :, :][:, range(0, w, 2), :][:, :, 0]
         green1 = image[range(0, h, 2), :, :][:, range(0, w, 2), :][:, :, 1]
         green2 = image[range(1, h, 2), :, :][:, range(1, w, 2), :][:, :, 1]

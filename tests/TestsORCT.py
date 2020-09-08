@@ -119,7 +119,7 @@ class TestORCT(unittest.TestCase):
         pass
 
     def test_ocrtShahedWithDataset(self):
-        rgbImages = self.datasetUtils.loadKodakDataset()
+        rgbImages = self.datasetUtils.loadArri()
         cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
         psnrs = []
         ssims = []
@@ -162,46 +162,69 @@ class TestORCT(unittest.TestCase):
                       "compressionRatiojpeg2000Lossy": compressionRatiojpeg2000LossyAfters}).to_excel("resultsShahedMethod.xlsx")
 
     def test_ocrtNewMethodWithDataset(self):
-        rgbImages = self.datasetUtils.loadKodakDataset()
-        cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
         psnrs = []
         ssims = []
         jpeg2000CompressionRatioAfters = []
-        JpegLsCompressionRatios = []
-        compressionRatioLZWs = []
-        compressionRatiojpeg2000LossyAfters = []
+        JpegLsCompressionRatiosAfters = []
+        compressionRatioLZWsAfters = []
+        jpeg2000CompressionRatioBefores = []
+        JpegLsCompressionRatiosBefores = []
+        compressionRatioLZWsBefores = []
+        datasetName = []
+        nameOfdatasets = ["Akademie", "Arri exterior", "Color test chart", "Face", "Kodak", "Lake locked", "Lake pan", "Night Odeplatz", "Nikon D40", "Nikon D90", "Nikon D7000", "Siegestor",
+                          "Pool interior"]
+        for nameOfdataset in nameOfdatasets:
+            print(nameOfdataset)
+            if nameOfdataset in ["Kodak", "Nikon D90", "Nikon D7000", "Nikon D40"]:
+                self.precisionFloatingPoint = 0
+                bias = 256
+            else:
+                self.precisionFloatingPoint = 4
+                bias = 65536
+            rgbImages = self.datasetUtils.loadOtherDataset(nameOfdataset)
+            cfaImages, image_size = self.datasetUtils.convertDatasetToCFA(rgbImages)
 
-        def inverseFunction(data):
-            data = data.astype('float32')
-            data = data * 2 - 256
-            data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            data = compute_orct1inverseV2(data, precisionFloatingPoint=self.precisionFloatingPoint)
-            return np.round(data)
+            def inverseFunction(data):
+                data = data.astype('float32')
+                data = data * 2 - bias
+                data = compute_orct2plus3inverse(data, precisionFloatingPoint=self.precisionFloatingPoint)
+                data = compute_orct1inverseV2(data, precisionFloatingPoint=self.precisionFloatingPoint)
+                return np.round(data)
 
-        sampleFunctionReverse = inverseFunction
+            sampleFunctionReverse = inverseFunction
 
-        for bayer in cfaImages:
-            bayer = bayer.astype("float32")
+            for bayer in cfaImages:
+                bayer = bayer.astype("float32")
 
-            filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
-            test_sample = filtered
-            filtered = (filtered + 256) / 2
-            filtered = np.ceil(filtered)
+                filtered = compute_orct2plus3(compute_orct1(bayer, precisionFloatingPoint=self.precisionFloatingPoint), precisionFloatingPoint=self.precisionFloatingPoint)
+                test_sample = filtered
+                filtered = (filtered + bias) / 2
+                filtered = np.ceil(filtered-np.min(filtered))
 
-            psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter = self.evaluation.evaluate(filtered, bayer,
-                                                                                                                                                                       sampleFunctionReverse,
-                                                                                                                                                                       precisionFloatingPoint=self.precisionFloatingPoint,
-                                                                                                                                                                       roundingMethod="ceil")
-            psnrs.append(psnr)
-            ssims.append(ssim)
-            jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
-            JpegLsCompressionRatios.append(JpegLsCompressionRatio)
-            compressionRatioLZWs.append(compressionRatioLZWAfter)
-            compressionRatiojpeg2000LossyAfters.append(compressionRatiojpeg2000LossyAfter)
-        pd.DataFrame({"psnr": psnrs, "ssim": ssims, "jpeg200CompressionRatio (bpp)": jpeg2000CompressionRatioAfters,
-                      "JpegLsCompressionRatio": JpegLsCompressionRatios,
-                      "compressionRatioLZW": compressionRatioLZWs,
-                      "compressionRatiojpeg2000Lossy": compressionRatiojpeg2000LossyAfters}).to_excel("resultsNewMethod.xlsx")
+                psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatioAfter, compressionRatioLZWAfter, jpeg2000CompressionRatioBefore, JpegLsCompressionRatioBefore, compressionRatioLZWBefore = self.evaluation.evaluate(
+                    filtered, bayer,
+                    sampleFunctionReverse,
+                    precisionFloatingPoint=self.precisionFloatingPoint,
+                    roundingMethod="ceil")
+                datasetName.append(nameOfdataset)
+                psnrs.append(psnr)
+                ssims.append(ssim)
+                jpeg2000CompressionRatioAfters.append(jpeg2000CompressionRatioAfter)
+                JpegLsCompressionRatiosAfters.append(JpegLsCompressionRatioAfter)
+                compressionRatioLZWsAfters.append(compressionRatioLZWAfter)
+                jpeg2000CompressionRatioBefores.append(jpeg2000CompressionRatioBefore)
+                JpegLsCompressionRatiosBefores.append(JpegLsCompressionRatioBefore)
+                compressionRatioLZWsBefores.append(compressionRatioLZWBefore)
+
+        pd.DataFrame({"Image set name": datasetName,
+                      "psnr": psnrs,
+                      "ssim": ssims,
+                      "jpeg200-LS After": jpeg2000CompressionRatioAfters,
+                      "jpeg-Ls After": JpegLsCompressionRatiosAfters,
+                      "LZW After": compressionRatioLZWsAfters,
+                      "jpeg200-LS Before": jpeg2000CompressionRatioBefores,
+                      "jpeg-Ls Before": JpegLsCompressionRatiosBefores,
+                      "LZW Before": compressionRatioLZWsBefores}).to_excel("resultsAll2.xlsx")
 
     def test_simpleORCT(self):
         bayer = np.array([[145, 77, 142, 73], [76, 67, 72, 62], [127, 67, 125, 65], [65, 54, 65, 57],

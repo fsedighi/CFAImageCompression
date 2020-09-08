@@ -31,7 +31,20 @@ class DataUtils:
         files = os.listdir(root)
         rgbImages = []
         for file in files:
-            img = cv2.imread(root + file)
+            img = cv2.imread(root + file, -1)
+            img = cv2.resize(img, (256, 256))
+            rgbImages.append(img)
+
+        rgbImages = np.asarray(rgbImages)
+        return rgbImages
+
+    def loadOtherDataset(self, type="Arri"):
+        # download from https://www.kaggle.com/sherylmehta/kodak-dataset
+        root = "../Data/{}/".format(type)
+        files = os.listdir(root)
+        rgbImages = []
+        for file in files:
+            img = cv2.imread(root + file, -1)
             # img = cv2.resize(img, (256, 256))
             rgbImages.append(img)
 
@@ -41,12 +54,12 @@ class DataUtils:
     def convertDatasetToCFA(self, rgbImages):
         # Convert to CFA
         rgb2CFAUtils = RGB2CFAUtils()
-        n_data=len(rgbImages)
+        n_data = len(rgbImages)
         h, w, c = rgbImages[0].shape
 
         cfaImages = []
         for i in range(n_data):
-            cfaImages.append(rgb2CFAUtils.rgb2CFA(rgbImages[i], show=False))
+            cfaImages.append(rgb2CFAUtils.rgb2CFA(rgbImages[i], show=False, res=0 if rgbImages[0].dtype == np.uint8 else 1))
             print("converting image {0} to CFA: Training".format(i))
         cfaImages = np.asarray(cfaImages)
         # cfaImages = np.reshape(cfaImages, [-1, cfaImages.shape[0], cfaImages.shape[1]])

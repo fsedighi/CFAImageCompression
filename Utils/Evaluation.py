@@ -84,7 +84,7 @@ class Evaluation:
 
     def compressionRatio(self, data, imageName, verbose, precisionFloatingPoint):
         # compressions
-        glymur.Jp2k(self.jpeg200Name, data=data, cratios=[1])
+        glymur.Jp2k(self.jpeg200Name, data=data)
         glymur.Jp2k(self.jpeg200NameLossy, data=data, cratios=[5])
 
         # array_buffer = data.tobytes()
@@ -116,10 +116,11 @@ class Evaluation:
             print('compression ratio of LZW encoded {0}: {1} bpp'.format(imageName, bitsNumber / compressionRatioLZW))
             print('compression ratio of JPEG-LS encoded {0}: {1} bpp'.format(imageName, bitsNumber / JpegLsCompressionRatio))
 
-        return bitsNumber / jpeg2000CompressionRatio, bitsNumber / JpegLsCompressionRatio, bitsNumber / compressionRatioLZW, bitsNumber / Jpeg2000LossyCompressionRatio
+        return bitsNumber / jpeg2000CompressionRatio, bitsNumber / JpegLsCompressionRatio, bitsNumber / compressionRatioLZW
 
     def evaluate(self, filteredData, originalData, inverseFilterFunction=None, verbose=True, precisionFloatingPoint=0, roundingMethod="floor"):
         if precisionFloatingPoint == 0:
+
             if roundingMethod == "floor":
                 filteredData = np.abs(np.floor(filteredData)).astype('uint8')
                 originalData = np.abs(np.floor(originalData)).astype('uint8')
@@ -133,12 +134,10 @@ class Evaluation:
             filteredData = np.abs(np.round(filteredData)).astype('uint16')
             originalData = np.abs(np.round(originalData)).astype('uint16')
 
-        jpeg2000CompressionRatioBefore, JpegLsCompressionRatio, compressionRatioLZWBefore, compressionRatiojpeg2000LossyBefore = self.compressionRatio(originalData, "Before", verbose,
-                                                                                                                                                       precisionFloatingPoint)
+        jpeg2000CompressionRatioBefore, JpegLsCompressionRatioBefore, compressionRatioLZWBefore = self.compressionRatio(originalData, "Before", verbose, precisionFloatingPoint)
         if verbose:
             print("**************************************************")
-        jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter = self.compressionRatio(filteredData, "After", verbose,
-                                                                                                                                                    precisionFloatingPoint)
+        jpeg2000CompressionRatioAfter, JpegLsCompressionRatioAfter, compressionRatioLZWAfter = self.compressionRatio(filteredData, "After", verbose,  precisionFloatingPoint)
 
         # Decompress.
         psnr = None
@@ -146,11 +145,14 @@ class Evaluation:
         jp2Decoded = glymur.Jp2k(self.jpeg200Name).read()
         if inverseFilterFunction is not None:
             retrivedData = inverseFilterFunction(jp2Decoded)
-            retrivedData = np.round(retrivedData)
+            if roundingMethod == "ceil":
+                retrivedData = np.round(retrivedData)
+            else:
+                retrivedData = np.abs(np.ceil(retrivedData)).astype('uint8')
             ssim = self.calculate_ssim(retrivedData, originalData)
             psnr = self.calculate_psnr(retrivedData, originalData)
             if verbose:
                 print("**************Quality******************")
                 print("JPEG 2000 : PSNR= {0};  SSIM={1}".format(psnr, ssim))
 
-        return psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatio, compressionRatioLZWAfter, compressionRatiojpeg2000LossyAfter
+        return psnr, ssim, jpeg2000CompressionRatioAfter, JpegLsCompressionRatioAfter, compressionRatioLZWAfter, jpeg2000CompressionRatioBefore, JpegLsCompressionRatioBefore, compressionRatioLZWBefore
